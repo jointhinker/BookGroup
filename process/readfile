@@ -1,0 +1,113 @@
+#coding:utf-8
+import codecs
+import re
+
+def read_name_dict(path,file):
+    name_dict = {}
+    try:
+        with codecs.open(path+file,"r","utf-8") as f:
+            all_names = f.readlines()
+            for item in all_names:
+                name_dict.setdefault(item.strip(),None)
+    except Exception,e:
+        print("error")
+        print(e.message)
+    return name_dict
+
+def read_contents(path,file):
+    write_name = []
+    #评论列表必须使用列表形式，否则顺序会被打乱
+    contents_dict = []
+    with codecs.open(path+file,"r","utf-8") as f:
+        contents = f.readlines()
+        for item in contents:
+            item = item.strip()
+            if not item:
+                continue
+            #书评开头，名字开始符号
+            if item.startswith("**"):
+                name_items = " ".join(item.split(" ")[0:-1])
+                #name = name_items.split("**")[1]
+                write_name.append(name_items+"**")
+            #书名部分
+            elif re.search(u"[#＃]",item):
+                if re.search(u"(《.+?》)",item):
+                    #识别书名
+                    book = re.search(u"(《.+?》)",item).group(1)
+                    print(book)
+                    #将书名和之前最后匹配的人名放到一个列表中，并初始化评论列表。评论列表为保持原文的格式，防止分割不明确
+                    contents_dict.append([book,write_name[-1],[]])
+                    contents_dict[-1][-1].append(item)
+            #除了--日期外，和以上的特殊标识外，都加到评论列表里
+            elif not item.startswith(u"—————"):
+                contents_dict[-1][-1].append(item)
+
+    return write_name,contents_dict
+
+def filter_name(name_dict, write_name,path,file):
+    i = 0
+    no = 0
+    with codecs.open(path+file,"w","utf-8") as f:
+        f.write(u"本群人数" + str(len(name_dict)) + "\n")
+        f.write(u"实际共有" + str(len(set(write_name))) + u"人发了书评!\n")
+        f.write(str(len(name_dict)-len(set(write_name))-i)+u"个删除！")
+        f.write(u"以下是程序过滤未发书评的人名单:\n\n")
+        #统计 全部名字字典 未在写书评名单里的
+        for name in name_dict:
+            #print(name)
+            if "**"+name.strip()+"**" not in write_name:
+                no += 1
+                f.write(str(no)+". "+name+"\n")
+            else:
+                i += 1
+        f.write(u"\n程序统计"+str(no)+u"个人未发书评！")
+        if i == len(set(write_name)):
+            f.write(u"相等，right!")
+        else:
+            f.write(str(len(set(write_name))-i)+u"个名字混淆，error!")
+            f.write("maybe name error:\n\n")
+        #统计写了书评的人 但未在 全部名字字典中的
+        fusion_index = 0
+        for item_write in set(write_name):
+            item_write = item_write.split("**")[1]
+            if item_write not in name_dict:
+                fusion_index += 1
+                f.write(str(fusion_index)+". "+item_write+"\n")
+
+
+
+def test_write_name(write_name):
+    for i in write_name:
+        print(i)
+
+def write_format(contents_list,path,file):
+    with codecs.open(path+file,"w","utf-8") as f:
+        for (index,book_info) in enumerate(contents_list):
+            f.write(str(index+1)+".")
+            f.write("["+book_info[0]+"]"+"(#"+str(index)+")")
+            f.write("  \n")
+        for (index,book_info) in enumerate(contents_list):
+            f.write("<div id=\""+str(index)+"\"></div>")
+            f.write("  \n")
+            f.write(book_info[1])
+            f.write("  \n")
+            f.write("  \n".join(book_info[2]))
+            f.write("  \n")
+
+if __name__ == "__main__":
+    path = "../201902/"
+    name_file = "people.txt"
+    content_file = "process_20190228.md"
+    name_dict = read_name_dict(path,name_file)
+    write_name, contents_dict = read_contents(path, content_file)
+    test_write_name(write_name)
+    filter_name(name_dict, write_name,path,"filter_name")
+    write_format(contents_dict,path,u"琅嬛书院2019-02.md")
+
+
+
+
+
+
+
+
