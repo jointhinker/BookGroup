@@ -95,14 +95,14 @@ def write_format(contents_list,path,file):
             f.write("  \n")
 
 if __name__ == "__main__":
-    path = "../201902/"
+    path = "../201905/"
     name_file = "people.txt"
-    content_file = "process_20190228.md"
+    content_file = "process_20190531.md"
     name_dict = read_name_dict(path,name_file)
     write_name, contents_dict = read_contents(path, content_file)
     test_write_name(write_name)
     filter_name(name_dict, write_name,path,"filter_name")
-    write_format(contents_dict,path,u"琅嬛书院2019-02.md")
+    write_format(contents_dict,path,u"琅嬛书院2019-05.md")
 
 
 
